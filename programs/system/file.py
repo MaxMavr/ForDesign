@@ -6,52 +6,35 @@ from typing import Union, TextIO
 from openpyxl import load_workbook
 import PyPDF2
 from zipfile import ZipFile
+from programs.config import WINDOWS_USERNAME
 
 
 def take_desktop() -> str:
-    return r"C:\Users\maxma\Desktop"
+    return rf"C:\Users\{WINDOWS_USERNAME}\Desktop"
 
 
 def file_from_desktop(file: str) -> str:
-    return rf"C:\Users\maxma\Desktop\{file}"
+    return rf"C:\Users\{WINDOWS_USERNAME}\Desktop\{file}"
 
 
-def split_name_format(name_format,
-                      mode='l',
-                      prefix='@'):
-    '''
-
-    name_format: Имя файла с расширением
-
-    mode: Что вернуть. Строка без пробелов
-
-    n: Имя,
-
-    f: Формат,
-
-    l: Список: Имя и формат,
-
-    p: Префикс
-
-
-    d: Добавить к формату точку
-    '''
-
-    name_format_list = name_format.split('.')
-    form = name_format_list[-1]
-    name = '.'.join(name_format_list[:-1])
+def split_filename(filename: str, mode: str = 'nf', prefix: str = '@'):
+    parts = filename.split('.')
+    extension = parts[-1].lower()
+    name = '.'.join(parts[:-1])
 
     if 'd' in mode:
-        form = '.' + form
+        extension = '.' + extension
 
-    if 'l' in mode:
-        return [name, form]
-    if 'f' in mode:
-        return form
+    output = []
+
     if 'n' in mode:
-        return name
+        output.append(name)
+    if 'f' in mode:
+        output.append(extension)
     if 'p' in mode:
-        return name.split(prefix)[-1]
+        output.append(name.split(prefix)[-1])
+
+    return output[0] if len(output) == 1 else output
 
 
 def make_json(path2file: str, content: Union[list, dict]):
@@ -66,12 +49,6 @@ def read_json(path2file: str) -> Union[list, dict]:
 
 def make_file(path2file: str) -> TextIO:
     file = open(path2file, 'w+', encoding="utf-8")
-    return file
-
-
-def make_svg(path2file: str, width: Union[int, float] = 1000, height: Union[int, float] = 1000) -> TextIO:
-    file = open(path2file, 'w+', encoding="utf-8")
-    file.write(f'<?xml version="1.0" encoding="utf-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}">')
     return file
 
 

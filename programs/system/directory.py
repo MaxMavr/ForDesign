@@ -3,7 +3,7 @@ from os import listdir, makedirs
 from os.path import isdir, getsize, exists
 from typing import Union
 from programs.prints.color_output import g, y, bold
-from programs.system.file import split_name_format
+from programs.system.file import split_filename
 
 
 def make_dir(dir_path):
@@ -111,7 +111,7 @@ def searching_in_files(check_path: Union[str, list, tuple],
 
                 check_dir(path2item)
 
-            elif split_name_format(item, 'f') in format_files:
+            elif split_filename(item, 'f') in format_files:
                 with open(path2item, 'r', encoding='utf-8') as file:
                     file_text = file.read()
 

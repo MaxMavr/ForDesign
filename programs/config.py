@@ -1,0 +1,1 @@
+WINDOWS_USERNAME: str = 'maxma'
