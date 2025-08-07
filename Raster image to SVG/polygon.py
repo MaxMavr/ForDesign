@@ -105,7 +105,7 @@ def colorful(namefile: str):
         d = trace_outline(pixels_set)
         content.append(f'<path class="{cls}" d="{d}"/>')
 
-    svg.make(
+    svg.file.make(
         width=img.width,
         height=img.height,
         styles=styles,
@@ -116,4 +116,7 @@ def colorful(namefile: str):
 
 
 if __name__ == '__main__':
-    colorful('test2.png')
+    # colorful('Плакат-градиент-случ.gif')
+    # colorful('Плакат-градиент-узор.gif')
+    # colorful('Плакат-градиент-шум.gif')
+    colorful('Плакат-текст.gif')

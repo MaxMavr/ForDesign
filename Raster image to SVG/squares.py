@@ -2,6 +2,7 @@ from programs.system import file
 from programs.color.decoding import rgb2hex
 from PIL import Image
 from programs import svg
+from programs.svg.item import SVGrect
 import os.path
 
 
@@ -21,9 +22,9 @@ def colorful(namefile: str):
                 styles_dict[color] = len(styles_dict) + 1
                 styles.append(f'.st{styles_dict[color]}{{fill:{color};}}')
 
-            rects.append(f'<rect class="st{styles_dict[color]}" x="{x}" y="{y}" width="1" height="1"/>')
+            rects.append(SVGrect(x, y, 1, 1, classes=f'st{styles_dict[color]}').svg)
 
-    svg.make(
+    svg.file.make(
         width=img.width,
         height=img.height,
         styles=styles,
@@ -44,9 +45,9 @@ def monochrome(namefile: str, target_color: str = '#000000'):
             color = rgb2hex(img.getpixel((x, y)))
 
             if color == target_color:
-                rects.append(f'<rect x="{x}" y="{y}" width="1" height="1"/>')
+                rects.append(SVGrect(x, y, 1, 1).svg)
 
-    svg.make(
+    svg.file.make(
         width=img.width,
         height=img.height,
         styles=None,
@@ -56,7 +57,7 @@ def monochrome(namefile: str, target_color: str = '#000000'):
 
 
 if __name__ == '__main__':
-    colorful('test.png')
-    # monochrome('Плакат-узор.gif')
-    # monochrome('Плакат-узор.gif')
-    # monochrome('Плакат-шум.gif')
+    monochrome('Плакат-градиент-случ.gif')
+    monochrome('Плакат-градиент-узор.gif')
+    monochrome('Плакат-градиент-шум.gif')
+    monochrome('Плакат-текст.gif')

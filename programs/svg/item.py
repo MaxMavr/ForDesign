@@ -8,22 +8,39 @@ class SVGrect:
     y: Union[int, float]
     width: Union[int, float]
     height: Union[int, float]
-    fill: str = "none"
-    stroke: str = "black"
-    stroke_width: int = 1
+    fill: Optional[str] = None
+    stroke: Optional[str] = None
+    stroke_width: Optional[Union[int, float]] = None
     rx: Optional[Union[int, float]] = None
     ry: Optional[Union[int, float]] = None
+    classes: Optional[str] = None
 
     @property
     def svg(self) -> str:
-        rounded_corners = ""
+        attrs = [
+            f'x="{self.x}"',
+            f'y="{self.y}"',
+            f'width="{self.width}"',
+            f'height="{self.height}"',
+        ]
+
+        if self.fill:
+            attrs.append(f'fill="{self.fill}"')
+
+        if self.stroke:
+            attrs.append(f'stroke="{self.stroke}"')
+
+        if self.stroke_width:
+            attrs.append(f'stroke-width="{self.stroke_width}"')
+
         if self.rx is not None and self.ry is not None:
-            rounded_corners = f' rx="{self.rx}" ry="{self.ry}"'
-        return (
-            f'<rect x="{self.x}" y="{self.y}" width="{self.width}" height="{self.height}"'
-            f' fill="{self.fill}" stroke="{self.stroke}" stroke-width="{self.stroke_width}"'
-            f'{rounded_corners} />'
-        )
+            attrs.append(f'rx="{self.rx}"')
+            attrs.append(f'ry="{self.ry}"')
+
+        if self.classes:
+            attrs.append(f'class="{self.classes}"')
+
+        return f'<rect {" ".join(attrs)} />'
 
 
 @dataclass
@@ -32,16 +49,30 @@ class SVGline:
     y1: Union[int, float]
     x2: Union[int, float]
     y2: Union[int, float]
-    stroke: str = "black"
-    stroke_width: int = 1
+    stroke: Optional[str] = None
+    stroke_width: Optional[Union[int, float]] = None
     stroke_dasharray: Optional[str] = None
+    classes: Optional[str] = None
 
     @property
     def svg(self) -> str:
-        dash_attr = ""
+        attrs = [
+            f'x1="{self.x1}"',
+            f'y1="{self.y1}"',
+            f'x2="{self.x2}"',
+            f'y2="{self.y2}"',
+        ]
+
+        if self.stroke:
+            attrs.append(f'stroke="{self.stroke}"')
+
+        if self.stroke_width:
+            attrs.append(f'stroke-width="{self.stroke_width}"')
+
         if self.stroke_dasharray:
-            dash_attr = f' stroke-dasharray="{self.stroke_dasharray}"'
-        return (
-            f'<line x1="{self.x1}" y1="{self.y1}" x2="{self.x2}" y2="{self.y2}"'
-            f' stroke="{self.stroke}" stroke-width="{self.stroke_width}"{dash_attr} />'
-        )
+            attrs.append(f'stroke-dasharray="{self.stroke_dasharray}"')
+
+        if self.classes:
+            attrs.append(f'class="{self.classes}"')
+
+        return f'<line {" ".join(attrs)} />'
