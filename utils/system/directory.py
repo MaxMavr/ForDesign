@@ -2,8 +2,8 @@ from PIL import Image
 from os import listdir, makedirs
 from os.path import isdir, getsize, exists
 from typing import Union
-from programs.prints.color_output import g, y, bold
-from programs.system.file import split_filename
+from utils.prints.color_output import g, y, bold
+from utils.system.file import split_filename
 
 
 def make_dir(dir_path):

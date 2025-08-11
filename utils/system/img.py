@@ -1,6 +1,6 @@
 # from PIL import Image
 # from math import sqrt
-# from programs.system.directory import split_name_format
+# from utils.system.directory import split_name_format
 # # from pdf2image import convert_from_path
 # import cv2
 #

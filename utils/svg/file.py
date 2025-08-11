@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Union
 
-from programs.svg.item import SVGElement
+from utils.svg.item import SVGElement
 
 
 def make(

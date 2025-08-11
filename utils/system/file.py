@@ -6,7 +6,7 @@ from typing import Union, TextIO
 from openpyxl import load_workbook
 import PyPDF2
 from zipfile import ZipFile
-from programs.config import WINDOWS_USERNAME
+from utils.config import WINDOWS_USERNAME
 
 
 def take_desktop() -> str:
