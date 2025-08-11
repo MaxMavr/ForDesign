@@ -441,18 +441,34 @@ class Color:
         color2 = Color.from_hsl(((h + shift) % 360, s, l))
         return color1, color2
 
-    def __add__(self, color: 'Color') -> 'Color':
-        r = _clamp(0, self._r + color._r, 255)
-        g = _clamp(0, self._g + color._g, 255)
-        b = _clamp(0, self._b + color._b, 255)
-        a = _clamp(0, self._a + color._a, 255)
+    def __add__(self, other: Union['Color', int,  float]) -> 'Color':
+        if isinstance(other, Color):
+            r = _clamp(0, self._r + other._r, 255)
+            g = _clamp(0, self._g + other._g, 255)
+            b = _clamp(0, self._b + other._b, 255)
+            a = _clamp(0, self._a + other._a, 255)
+        elif isinstance(other, (int, float)):
+            r = _clamp(0, self._r + other, 255)
+            g = _clamp(0, self._g + other, 255)
+            b = _clamp(0, self._b + other, 255)
+            a = _clamp(0, self._a + other, 255)
+        else:
+            return NotImplemented
         return Color(r, g, b, a)
 
-    def __sub__(self, color: 'Color') -> 'Color':
-        r = _clamp(0, self._r - color._r, 255)
-        g = _clamp(0, self._g - color._g, 255)
-        b = _clamp(0, self._b - color._b, 255)
-        a = _clamp(0, self._a - color._a, 255)
+    def __sub__(self, other: Union['Color', int,  float]) -> 'Color':
+        if isinstance(other, Color):
+            r = _clamp(0, self._r - other._r, 255)
+            g = _clamp(0, self._g - other._g, 255)
+            b = _clamp(0, self._b - other._b, 255)
+            a = _clamp(0, self._a - other._a, 255)
+        elif isinstance(other, (int, float)):
+            r = _clamp(0, self._r - other, 255)
+            g = _clamp(0, self._g - other, 255)
+            b = _clamp(0, self._b - other, 255)
+            a = _clamp(0, self._a - other, 255)
+        else:
+            return NotImplemented
         return Color(r, g, b, a)
 
     def __mul__(self, multiplier: Union[int, float]) -> 'Color':
