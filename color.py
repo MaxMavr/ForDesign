@@ -417,16 +417,25 @@ class Color:
 
         return round(h), round(s * 100), round(l * 100)
 
+    @property
+    def grayscale(self) -> 'Color':
+        """Преобразовать цвет в оттенок серого по яркости."""
+        g = int(self.brightness)
+        return Color(g, g, g, self._a)
+
+    @property
     def invert(self) -> 'Color':
         """Обратный цвет"""
         return Color(255 - self._r, 255 - self._g, 255 - self._b)
 
+    @property
     def complement(self) -> 'Color':
         """Возвращает дополнительный цвет (напротив в цветовом круге)"""
         h, s, l = self.hsl
         h = (h + 180) % 360
         return Color.from_hsl((h, s, l))
 
+    @property
     def triad(self) -> Tuple['Color', 'Color']:
         """Возвращает два дополнительных цвета для триадной схемы"""
         h, s, l = self.hsl
@@ -434,6 +443,7 @@ class Color:
         color2 = Color.from_hsl(((h + 240) % 360, s, l))
         return color1, color2
 
+    @property
     def analogous(self, shift: int = 30) -> Tuple['Color', 'Color']:
         """Аналогичные цвета ±shift градусов по hue"""
         h, s, l = self.hsl
