@@ -1,11 +1,13 @@
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Union
+
+from programs.svg.item import SVGElement
 
 
 def make(
         width: int,
         height: int,
         styles: Optional[List[str]],
-        content: List[str],
+        content: List[Union[str, SVGElement]],
         output_path: Optional[str] = None,
         attributes: Optional[Dict[str, str]] = None) -> str:
 
@@ -31,6 +33,12 @@ def make(
         svg_content.append('<style>')
         svg_content.extend(styles)
         svg_content.append('</style>')
+
+    for item in content:
+        if isinstance(item, SVGElement):
+            svg_content.append(item.svg)
+        else:
+            svg_content.append(str(item))
 
     svg_content.extend(content)
     svg_content.append('</svg>')

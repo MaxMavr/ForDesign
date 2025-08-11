@@ -1,56 +1,26 @@
-from dataclasses import dataclass
-from typing import Optional, Union
+from abc import abstractmethod, ABC
+from dataclasses import dataclass, field
+from typing import Optional, Union, Dict, List
 from color import Color
 
 
 @dataclass
-class GradientLine:
-    x1: Union[int, float]
-    y1: Union[int, float]
-    x2: Union[int, float]
-    y2: Union[int, float]
-    color1: Optional[Color] = None
-    color2: Optional[Color] = None
-    stroke: Optional[Color] = None
-    stroke_width: Optional[Union[int, float]] = None
-
-    def value(self, x: int, y: int) -> float:
-        dx, dy = self.x2 - self.x1, self.y2 - self.y1
-        if dx == dy == 0:
-            return 0
-        t = ((x - self.x1) * dx + (y - self.y1) * dy) / (dx * dx + dy * dy)
-        return max(0, min(1, t))
-
-    def color(self, x: int, y: int):
-        t = self.value(x, y)
-        if self.color1 and self.color2:
-            return self.color1 + (self.color2 - self.color1) * t
-        if self.color1:
-            return self.color1
-        if self.color2:
-            return self.color2
-        return None
-
+class SVGElement(ABC):
     @property
+    @abstractmethod
     def svg(self) -> str:
-        attrs = [
-            f'x1="{self.x1}"',
-            f'y1="{self.y1}"',
-            f'x2="{self.x2}"',
-            f'y2="{self.y2}"',
-        ]
+        ...
 
-        if self.stroke:
-            attrs.append(f'stroke="{str(self.stroke)}"')
+    @staticmethod
+    def _attrs_to_str(attrs: Dict[str, Optional[Union[str, float]]]) -> str:
+        return " ".join(f'{k}="{v}"' for k, v in attrs.items() if v is not None)
 
-        if self.stroke_width:
-            attrs.append(f'stroke-width="{self.stroke_width}"')
-
-        return f'<line {" ".join(attrs)} />'
+    def __str__(self) -> str:
+        return self.svg
 
 
 @dataclass
-class SVGrect:
+class SVGrect(SVGElement):
     x: Union[int, float]
     y: Union[int, float]
     width: Union[int, float]
@@ -64,34 +34,28 @@ class SVGrect:
 
     @property
     def svg(self) -> str:
-        attrs = [
-            f'x="{self.x}"',
-            f'y="{self.y}"',
-            f'width="{self.width}"',
-            f'height="{self.height}"',
-        ]
-
-        if self.fill:
-            attrs.append(f'fill="{str(self.fill)}"')
-
-        if self.stroke:
-            attrs.append(f'stroke="{str(self.stroke)}"')
-
-        if self.stroke_width:
-            attrs.append(f'stroke-width="{self.stroke_width}"')
+        attrs = {
+            'x': self.x,
+            'y': self.y,
+            'width': self.width,
+            'height': self.height,
+            'fill': self.height,
+            'stroke': self.height,
+            'stroke-width': self.height,
+            'rx': self.rx,
+            'ry': self.ry,
+            'class': self.classes,
+        }
 
         if self.rx is not None and self.ry is not None:
-            attrs.append(f'rx="{self.rx}"')
-            attrs.append(f'ry="{self.ry}"')
+            attrs["rx"] = str(self.rx)
+            attrs["ry"] = str(self.ry)
 
-        if self.classes:
-            attrs.append(f'class="{self.classes}"')
-
-        return f'<rect {" ".join(attrs)} />'
+        return f'<rect {self._attrs_to_str(attrs)} />'
 
 
 @dataclass
-class SVGline:
+class SVGline(SVGElement):
     x1: Union[int, float]
     y1: Union[int, float]
     x2: Union[int, float]
@@ -103,23 +67,50 @@ class SVGline:
 
     @property
     def svg(self) -> str:
-        attrs = [
-            f'x1="{self.x1}"',
-            f'y1="{self.y1}"',
-            f'x2="{self.x2}"',
-            f'y2="{self.y2}"',
-        ]
+        attrs = {
+            'x1': self.x1,
+            'y1': self.y1,
+            'x2': self.x2,
+            'y2': self.y2,
+            'stroke': str(self.stroke),
+            'stroke-width': self.stroke_width,
+            'stroke-dasharray': self.stroke_dasharray,
+            'class': self.classes
+        }
 
-        if self.stroke:
-            attrs.append(f'stroke="{str(self.stroke)}"')
+        return f'<line {self._attrs_to_str(attrs)} />'
 
-        if self.stroke_width:
-            attrs.append(f'stroke-width="{self.stroke_width}"')
 
-        if self.stroke_dasharray:
-            attrs.append(f'stroke-dasharray="{self.stroke_dasharray}"')
+@dataclass
+class SVGGroup(SVGElement):
+    elements: List[SVGElement] = field(default_factory=list)
+    classes: Optional[str] = None
 
-        if self.classes:
-            attrs.append(f'class="{self.classes}"')
+    @property
+    def svg(self) -> str:
+        content = '\n'.join(element.svg for element in self.elements)
+        class_attr = f' class="{self.classes}"' if self.classes else ""
+        return f'<g{class_attr}>\n{content}\n</g>'
 
-        return f'<line {" ".join(attrs)} />'
+
+@dataclass
+class GradientLine(SVGline):
+    color1: Optional[Color] = None
+    color2: Optional[Color] = None
+
+    def value(self, x: int, y: int) -> float:
+        dx, dy = self.x2 - self.x1, self.y2 - self.y1
+        if dx == dy == 0:
+            return 0
+        t = ((x - self.x1) * dx + (y - self.y1) * dy) / (dx * dx + dy * dy)
+        return max(0.0, min(1.0, t))
+
+    def color(self, x: int, y: int) -> Optional[Color]:
+        t = self.value(x, y)
+        if self.color1 and self.color2:
+            return self.color1 + (self.color2 - self.color1) * t
+        if self.color1:
+            return self.color1
+        if self.color2:
+            return self.color2
+        return None
