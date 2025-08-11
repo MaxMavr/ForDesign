@@ -176,8 +176,8 @@ class Color:
     Класс для представления и преобразования цвета с поддержкой различных моделей
     и форматов: RGB, RGBA, HEX, CMYK, HSL, HSV, CSS имена.
     """
-    def __init__(self, r: Optional[int] = None, g: Optional[int] = None,
-                 b: Optional[int] = None, a: Optional[int] = None):
+    def __init__(self, r: Optional[Union[int, float]] = None, g: Optional[Union[int, float]] = None,
+                 b: Optional[Union[int, float]] = None, a: Optional[Union[int, float]] = None):
         r, g, b = (int(round(v)) if v is not None else 0 for v in (r, g, b))
         a = int(round(a)) if a is not None else 255
         self._r, self._g, self._b, self._a = _clamp_tuple(0, (r, g, b, a), 255)
@@ -188,7 +188,7 @@ class Color:
         return cls(randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255) if alpha else 255)
 
     @classmethod
-    def from_dict(cls, color: Dict[str, int]) -> 'Color':
+    def from_dict(cls, color: Dict[str, Union[int, float]]) -> 'Color':
         r = color.get('r', 0)
         g = color.get('g', 0)
         b = color.get('b', 0)
@@ -248,6 +248,9 @@ class Color:
     def from_hsl(cls, color: Tuple[int, int, int]) -> 'Color':
         """Создать цвет из HSL (h: 0..360; s, l: 0..100)."""
         h, s, l = color
+        h = _clamp(0, h, 360)
+        s = _clamp(0, s, 100)
+        l = _clamp(0, l, 100)
 
         s /= 100
         l /= 100
@@ -275,6 +278,9 @@ class Color:
     def from_hsv(cls, color: Tuple[int, int, int]) -> 'Color':
         """Создать цвет из HSV (h: 0..360; s, v: 0..100)."""
         h, s, v = color
+        h = _clamp(0, h, 360)
+        s = _clamp(0, s, 100)
+        v = _clamp(0, v, 100)
 
         s /= 100
         v /= 100
@@ -353,7 +359,7 @@ class Color:
     @property
     def brightness(self) -> float:
         value = 0.299 * self._r + 0.587 * self._g + 0.114 * self._b
-        return round(value)
+        return value
 
     @property
     def hue(self) -> float:
@@ -386,14 +392,12 @@ class Color:
             value = 0.0
         else:
             value = delta / (1 - abs(2 * l - 1))
-
         return value
 
     @property
     def lightness(self) -> float:
         r, g, b, _ = self._rgba_normalize
         value = (max(r, g, b) + min(r, g, b)) / 2
-
         return value
 
     @property
@@ -501,7 +505,7 @@ class Color:
         return self.hexa
 
     def __repr__(self):
-        return f'Color(HEX={self.hexa}, RGB={self.rgba}, CMYK={self.cmyk}, CSS_name={self.css_name}, HSV={self.hsv}, HSL={self.hsl})'
+        return f'Color{self.hexa}({self._r}, {self._g}, {self._b}, {self._a})'
 
     def show_color(self, size: Tuple[int, int] = (300, 300)):
         img = Image.new('RGB', size, self.rgb)
