@@ -1,10 +1,8 @@
-import os
-
-from PIL import Image
 from collections import deque
-from programs import svg
-from programs.color.decoding import rgb2hex
-from programs.system import file
+from utils import svg
+from utils.color import Color
+from utils.img import input_img
+from utils.system import file
 
 
 def get_neighbors(x, y, width, height):
@@ -33,7 +31,7 @@ def find_connected_components(img):
                         if not visited[ny][nx] and pixels[nx, ny] == color:
                             visited[ny][nx] = True
                             queue.append((nx, ny))
-                components.append({'color': rgb2hex(color), 'pixels': comp_pixels})
+                components.append({'color': Color.from_rgb(color), 'pixels': comp_pixels})
     return components
 
 
@@ -85,9 +83,9 @@ def trace_outline(pixels_set):
         return ""
 
 
-def colorful(namefile: str):
-    img = Image.open(f'input/{namefile}').convert('RGB')
-    name = file.split_filename(namefile, 'n')
+def colorful(filename: str):
+    img = input_img(filename)
+    name = file.split_filename(filename, 'n')
 
     components = find_connected_components(img)
 
@@ -96,7 +94,7 @@ def colorful(namefile: str):
     styles_dict = {}
 
     for idx, comp in enumerate(components, 1):
-        color = comp['color']
+        color = comp['color'].hex
         pixels_set = set(comp['pixels'])
         if color not in styles_dict:
             styles_dict[color] = idx
@@ -105,18 +103,15 @@ def colorful(namefile: str):
         d = trace_outline(pixels_set)
         content.append(f'<path class="{cls}" d="{d}"/>')
 
-    svg.file.make(
+    svg.make(
         width=img.width,
         height=img.height,
         styles=styles,
         content=content,
         attributes={"shape-rendering": "crispEdges"},
-        output_path=os.path.join(os.path.dirname(__file__), "output", f"{name}.svg")
+        filename=name
     )
 
 
 if __name__ == '__main__':
-    # colorful('Плакат-градиент-случ.gif')
-    # colorful('Плакат-градиент-узор.gif')
-    # colorful('Плакат-градиент-шум.gif')
-    colorful('Плакат-текст.gif')
+    colorful('brick.png')
