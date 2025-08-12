@@ -19,6 +19,8 @@ def file_from_desktop(file: str) -> str:
 
 def split_filename(filename: str, mode: str = 'nf', prefix: str = '@'):
     parts = filename.split('.')
+    if len(parts) == 1:
+        return parts[0]
     extension = parts[-1].lower()
     name = '.'.join(parts[:-1])
 
