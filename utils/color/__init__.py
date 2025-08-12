@@ -469,7 +469,7 @@ class Color:
             r = _clamp(0, self._r + other, 255)
             g = _clamp(0, self._g + other, 255)
             b = _clamp(0, self._b + other, 255)
-        elif isinstance(other, (Tuple[int, int, int], Tuple[float, float, float])):
+        elif isinstance(other, tuple) and len(other) == 3 and all(isinstance(i, (int, float)) for i in other):
             r = _clamp(0, self._r + other[0], 255)
             g = _clamp(0, self._g + other[1], 255)
             b = _clamp(0, self._b + other[2], 255)
@@ -489,7 +489,7 @@ class Color:
             r = _clamp(0, self._r - other, 255)
             g = _clamp(0, self._g - other, 255)
             b = _clamp(0, self._b - other, 255)
-        elif isinstance(other, (Tuple[int, int, int], Tuple[float, float, float])):
+        elif isinstance(other, tuple) and len(other) == 3 and all(isinstance(i, (int, float)) for i in other):
             r = _clamp(0, self._r - other[0], 255)
             g = _clamp(0, self._g - other[1], 255)
             b = _clamp(0, self._b - other[2], 255)
@@ -506,7 +506,7 @@ class Color:
             r = _clamp(0, other - self._r, 255)
             g = _clamp(0, other - self._g, 255)
             b = _clamp(0, other - self._b, 255)
-        elif isinstance(other, (Tuple[int, int, int], Tuple[float, float, float])):
+        elif isinstance(other, tuple) and len(other) == 3 and all(isinstance(i, (int, float)) for i in other):
             r = _clamp(0, other[0] - self._r, 255)
             g = _clamp(0, other[1] - self._g, 255)
             b = _clamp(0, other[2] - self._b, 255)
