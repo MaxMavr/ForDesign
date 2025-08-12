@@ -230,7 +230,7 @@ class Color:
     @classmethod
     def from_css_name(cls, name: str) -> 'Color':
         """Создать цвет из CSS-имени, если не найдено — возвращается черный."""
-        if name.lower() in css_named_colors:
+        if name.lower() in css_named_colors.keys():
             return cls(*css_named_colors[name.lower()])
         return cls()
 
@@ -425,75 +425,65 @@ class Color:
             r = _clamp(0, self._r + other._r, 255)
             g = _clamp(0, self._g + other._g, 255)
             b = _clamp(0, self._b + other._b, 255)
-            a = _clamp(0, self._a + other._a, 255)
         elif isinstance(other, (int, float)):
             r = _clamp(0, self._r + other, 255)
             g = _clamp(0, self._g + other, 255)
             b = _clamp(0, self._b + other, 255)
-            a = _clamp(0, self._a + other, 255)
         else:
             return NotImplemented
-        return Color(r, g, b, a)
+        return Color(r, g, b)
 
     def __radd__(self, other: Union['Color', int,  float]) -> 'Color':
         if isinstance(other, Color):
             r = _clamp(0, other._r + self._r, 255)
             g = _clamp(0, other._g + self._g, 255)
             b = _clamp(0, other._b + self._b, 255)
-            a = _clamp(0, other._a + self._a, 255)
         elif isinstance(other, (int, float)):
             r = _clamp(0, other + self._r, 255)
             g = _clamp(0, other + self._g, 255)
             b = _clamp(0, other + self._b, 255)
-            a = _clamp(0, other + self._a, 255)
         else:
             return NotImplemented
-        return Color(r, g, b, a)
+        return Color(r, g, b)
 
     def __sub__(self, other: Union['Color', int,  float]) -> 'Color':
         if isinstance(other, Color):
             r = _clamp(0, self._r - other._r, 255)
             g = _clamp(0, self._g - other._g, 255)
             b = _clamp(0, self._b - other._b, 255)
-            a = _clamp(0, self._a - other._a, 255)
         elif isinstance(other, (int, float)):
             r = _clamp(0, self._r - other, 255)
             g = _clamp(0, self._g - other, 255)
             b = _clamp(0, self._b - other, 255)
-            a = _clamp(0, self._a - other, 255)
         else:
             return NotImplemented
-        return Color(r, g, b, a)
+        return Color(r, g, b)
 
     def __rsub__(self, other: Union['Color', int,  float]) -> 'Color':
         if isinstance(other, Color):
             r = _clamp(0, other._r - self._r, 255)
             g = _clamp(0, other._g - self._g, 255)
             b = _clamp(0, other._b - self._b, 255)
-            a = _clamp(0, other._a - self._a, 255)
         elif isinstance(other, (int, float)):
             r = _clamp(0, other - self._r, 255)
             g = _clamp(0, other - self._g, 255)
             b = _clamp(0, other - self._b, 255)
-            a = _clamp(0, other - self._a, 255)
         else:
             return NotImplemented
-        return Color(r, g, b, a)
+        return Color(r, g, b)
 
     def __neg__(self) -> 'Color':
         return Color(
             _clamp(0, 255 - self._r, 255),
             _clamp(0, 255 - self._g, 255),
-            _clamp(0, 255 - self._b, 255),
-            _clamp(0, 255 - self._a, 255),
+            _clamp(0, 255 - self._b, 255)
         )
 
     def __mul__(self, multiplier: Union[int, float]) -> 'Color':
         r = _clamp(0, int(self._r * multiplier), 255)
         g = _clamp(0, int(self._g * multiplier), 255)
         b = _clamp(0, int(self._b * multiplier), 255)
-        a = _clamp(0, int(self._a * multiplier), 255)
-        return Color(r, g, b, a)
+        return Color(r, g, b)
 
     def __rmul__(self, multiplier: Union[int, float]) -> 'Color':
         return self.__mul__(multiplier)

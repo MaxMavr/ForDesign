@@ -49,6 +49,22 @@ def distance(color1: Color, color2: Color) -> float:
     return sqrt(sum((v1 - v2)**2 for v1, v2 in zip(color1.rgba, color2.rgba)))
 
 
-def blend(color1: Color, color2: Color, alpha: float = 0.5) -> Color:
-    """Смешать два цвета с заданным коэффициентом"""
-    return color1 * (1 - alpha) + color2 * alpha
+def blend(color1: Color, color2: Color) -> Color:
+    def _blend_channel(value1, alpha1, value2, alpha2):
+        if alpha1 == 0 and alpha2 == 0:
+            return 0
+        return int(
+            (value1 * alpha1 + value2 * alpha2 * (255 - alpha1) / 255) /
+            (alpha1 + alpha2 * (255 - alpha1) / 255))
+
+    def _blend_alpha(alpha1, alpha2):
+        return int(alpha1 + alpha2 * (255 - alpha1) / 255)
+
+    r1, g1, b1, a1 = color1.rgba
+    r2, g2, b2, a2 = color2.rgba
+
+    out_a = _blend_alpha(a1, a2)
+    r = _blend_channel(r1, a1, r2, a2)
+    g = _blend_channel(g1, a1, g2, a2)
+    b = _blend_channel(b1, a1, b2, a2)
+    return Color(r, g, b, out_a)
