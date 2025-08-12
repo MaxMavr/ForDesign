@@ -6,7 +6,8 @@ from PIL import Image
 
 def show_color(self, size: Tuple[int, int] = (300, 300)):
     img = Image.new('RGB', size, self.rgb)
-    img.show(title=f'Color(HEX: {self.hexa}, RGB: {self.rgba}, CMYK: {self.cmyk}, CSS_name: {self.css_name}, HSV: {self.hsv}, HSL: {self.hsl})')
+    img.show(
+        title=f'Color(HEX: {self.hexa}, RGB: {self.rgba}, CMYK: {self.cmyk}, CSS_name: {self.css_name}, HSV: {self.hsv}, HSL: {self.hsl})')
     del img
 
 
@@ -45,26 +46,49 @@ def analogous(color: Color, shift: int = 30) -> Tuple[Color, Color]:
     return color1, color2
 
 
+def red_channel(color: Color) -> Color:
+    """Выделить красный канал"""
+    red_color = color - (0, 255, 255)
+    red_color.a = 255
+    return red_color
+
+
+def green_channel(color: Color) -> Color:
+    """Выделить зелёный канал"""
+    green_color = color - (255, 0, 255)
+    green_color.a = 255
+    return green_color
+
+
+def blue_channel(color: Color) -> Color:
+    """Выделить синий канал"""
+    blue_color = color - (255, 255, 0)
+    blue_color.a = 255
+    return blue_color
+
+
+def alpha_channel(color: Color) -> Color:
+    """Выделить альфа-канал как оттенок серого"""
+    gray_value = color.a
+    return Color(gray_value, gray_value, gray_value, 255)
+
+
 def distance(color1: Color, color2: Color) -> float:
     return sqrt(sum((v1 - v2)**2 for v1, v2 in zip(color1.rgba, color2.rgba)))
 
 
 def blend(color1: Color, color2: Color) -> Color:
-    def _blend_channel(value1, alpha1, value2, alpha2):
-        if alpha1 == 0 and alpha2 == 0:
-            return 0
-        return int(
-            (value1 * alpha1 + value2 * alpha2 * (255 - alpha1) / 255) /
-            (alpha1 + alpha2 * (255 - alpha1) / 255))
+    def blend_channel(value1: float, value2: float, alpha1: float, alpha2: float, out_alpha: float) -> float:
+        return (value1 * alpha1 + value2 * alpha2 * (1 - alpha1)) / out_alpha
 
-    def _blend_alpha(alpha1, alpha2):
-        return int(alpha1 + alpha2 * (255 - alpha1) / 255)
+    a1, a2 = color1.a / 255, color2.a / 255
+    out_a = a1 + a2 * (1 - a1)
 
-    r1, g1, b1, a1 = color1.rgba
-    r2, g2, b2, a2 = color2.rgba
+    if not out_a:
+        return Color(0, 0, 0, 0)
 
-    out_a = _blend_alpha(a1, a2)
-    r = _blend_channel(r1, a1, r2, a2)
-    g = _blend_channel(g1, a1, g2, a2)
-    b = _blend_channel(b1, a1, b2, a2)
-    return Color(r, g, b, out_a)
+    r = blend_channel(color1.r, color2.r, a1, a2, out_a)
+    g = blend_channel(color1.g, color2.g, a1, a2, out_a)
+    b = blend_channel(color1.b, color2.b, a1, a2, out_a)
+
+    return Color(r, g, b, out_a * 255)

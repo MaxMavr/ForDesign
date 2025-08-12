@@ -54,10 +54,14 @@ def noise_dither(brightness: Union[int, float]) -> bool:
     return brightness > threshold
 
 
-def white_noise_dither(brightness: Union[int, float]) -> bool:
-    jitter = (random.random() - 0.5) * 0.3  # ±15%
-    threshold = min(max(brightness + jitter, 0), 1)
-    return brightness > threshold
+def white_noise_dither(brightness: Union[int, float], jitter_percent: Union[int, float] = 0.15) -> bool:
+    jitter = (random.random() * 2 - 1) * jitter_percent
+    threshold = brightness + jitter
+    if threshold < 0:
+        threshold = 0.0
+    elif threshold > 1:
+        threshold = 1.0
+    return random.random() < threshold
 
 
 def threshold_dither(brightness: Union[int, float], threshold: Union[int, float]) -> bool:

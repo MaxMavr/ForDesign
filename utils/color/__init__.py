@@ -181,6 +181,46 @@ class Color:
         a = int(round(a)) if a is not None else 255
         self._r, self._g, self._b, self._a = _clamp_tuple(0, (r, g, b, a), 255)
 
+    @property
+    def r(self) -> int:
+        """Возвращает красный канал цвета (0..255)"""
+        return self._r
+
+    @r.setter
+    def r(self, value: Union[int, float]) -> None:
+        """Устанавливает красный канал цвета (0..255)"""
+        self._r = _clamp(0, value, 255)
+
+    @property
+    def g(self) -> int:
+        """Возвращает зелёный канал цвета (0..255)"""
+        return self._g
+
+    @g.setter
+    def g(self, value: Union[int, float]) -> None:
+        """Устанавливает зелёный канал цвета (0..255)"""
+        self._g = _clamp(0, value, 255)
+
+    @property
+    def b(self) -> int:
+        """Возвращает синий канал цвета (0..255)"""
+        return self._b
+
+    @b.setter
+    def b(self, value: Union[int, float]) -> None:
+        """Устанавливает синий канал цвета (0..255)"""
+        self._b = _clamp(0, value, 255)
+
+    @property
+    def a(self) -> int:
+        """Возвращает альфа-канал цвета (0..255)"""
+        return self._a
+
+    @a.setter
+    def a(self, value: Union[int, float]) -> None:
+        """Устанавливает альфа-канал цвета (0..255)"""
+        self._a = _clamp(0, value, 255)
+
     @classmethod
     def from_random(cls, alpha: bool = False) -> 'Color':
         """Создать случайный цвет, альфа-прозрачность включительно если alpha=True."""
@@ -420,7 +460,7 @@ class Color:
 
         return round(h), round(s * 100), round(l * 100)
 
-    def __add__(self, other: Union['Color', int,  float]) -> 'Color':
+    def __add__(self, other: Union['Color', int,  float, Tuple[int, int, int], Tuple[float, float, float]]) -> 'Color':
         if isinstance(other, Color):
             r = _clamp(0, self._r + other._r, 255)
             g = _clamp(0, self._g + other._g, 255)
@@ -429,24 +469,18 @@ class Color:
             r = _clamp(0, self._r + other, 255)
             g = _clamp(0, self._g + other, 255)
             b = _clamp(0, self._b + other, 255)
+        elif isinstance(other, (Tuple[int, int, int], Tuple[float, float, float])):
+            r = _clamp(0, self._r + other[0], 255)
+            g = _clamp(0, self._g + other[1], 255)
+            b = _clamp(0, self._b + other[2], 255)
         else:
             return NotImplemented
         return Color(r, g, b)
 
-    def __radd__(self, other: Union['Color', int,  float]) -> 'Color':
-        if isinstance(other, Color):
-            r = _clamp(0, other._r + self._r, 255)
-            g = _clamp(0, other._g + self._g, 255)
-            b = _clamp(0, other._b + self._b, 255)
-        elif isinstance(other, (int, float)):
-            r = _clamp(0, other + self._r, 255)
-            g = _clamp(0, other + self._g, 255)
-            b = _clamp(0, other + self._b, 255)
-        else:
-            return NotImplemented
-        return Color(r, g, b)
+    def __radd__(self, other: Union['Color', int,  float, Tuple[int, int, int], Tuple[float, float, float]]) -> 'Color':
+        return self.__add__(other)
 
-    def __sub__(self, other: Union['Color', int,  float]) -> 'Color':
+    def __sub__(self, other: Union['Color', int,  float, Tuple[int, int, int], Tuple[float, float, float]]) -> 'Color':
         if isinstance(other, Color):
             r = _clamp(0, self._r - other._r, 255)
             g = _clamp(0, self._g - other._g, 255)
@@ -455,11 +489,15 @@ class Color:
             r = _clamp(0, self._r - other, 255)
             g = _clamp(0, self._g - other, 255)
             b = _clamp(0, self._b - other, 255)
+        elif isinstance(other, (Tuple[int, int, int], Tuple[float, float, float])):
+            r = _clamp(0, self._r - other[0], 255)
+            g = _clamp(0, self._g - other[1], 255)
+            b = _clamp(0, self._b - other[2], 255)
         else:
             return NotImplemented
         return Color(r, g, b)
 
-    def __rsub__(self, other: Union['Color', int,  float]) -> 'Color':
+    def __rsub__(self, other: Union['Color', int, float, Tuple[int, int, int], Tuple[float, float, float]]) -> 'Color':
         if isinstance(other, Color):
             r = _clamp(0, other._r - self._r, 255)
             g = _clamp(0, other._g - self._g, 255)
@@ -468,6 +506,10 @@ class Color:
             r = _clamp(0, other - self._r, 255)
             g = _clamp(0, other - self._g, 255)
             b = _clamp(0, other - self._b, 255)
+        elif isinstance(other, (Tuple[int, int, int], Tuple[float, float, float])):
+            r = _clamp(0, other[0] - self._r, 255)
+            g = _clamp(0, other[1] - self._g, 255)
+            b = _clamp(0, other[2] - self._b, 255)
         else:
             return NotImplemented
         return Color(r, g, b)
@@ -476,13 +518,14 @@ class Color:
         return Color(
             _clamp(0, 255 - self._r, 255),
             _clamp(0, 255 - self._g, 255),
-            _clamp(0, 255 - self._b, 255)
+            _clamp(0, 255 - self._b, 255),
+            self._a
         )
 
     def __mul__(self, multiplier: Union[int, float]) -> 'Color':
-        r = _clamp(0, int(self._r * multiplier), 255)
-        g = _clamp(0, int(self._g * multiplier), 255)
-        b = _clamp(0, int(self._b * multiplier), 255)
+        r = _clamp(0, self._r * multiplier, 255)
+        g = _clamp(0, self._g * multiplier, 255)
+        b = _clamp(0, self._b * multiplier, 255)
         return Color(r, g, b)
 
     def __rmul__(self, multiplier: Union[int, float]) -> 'Color':
@@ -491,8 +534,7 @@ class Color:
     def __eq__(self, color: 'Color') -> bool:
         return (self._r == color._r and
                 self._g == color._g and
-                self._b == color._b and
-                self._a == color._a)
+                self._b == color._b)
 
     def __ne__(self, other: 'Color') -> bool:
         return not self.__eq__(other)
