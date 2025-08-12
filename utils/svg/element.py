@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 from dataclasses import dataclass, field
 from typing import Optional, Union, Dict, List
-from color import Color
+from utils.color import Color
 
 
 @dataclass
@@ -98,6 +98,20 @@ class GradientLine(SVGline):
     color1: Optional[Color] = None
     color2: Optional[Color] = None
 
+    def invert(self) -> 'GradientLine':
+        return GradientLine(
+            x1=self.x1,
+            y1=self.y1,
+            x2=self.x2,
+            y2=self.y2,
+            stroke=self.stroke,
+            stroke_width=self.stroke_width,
+            stroke_dasharray=self.stroke_dasharray,
+            classes=self.classes,
+            color1=self.color2,
+            color2=self.color1
+        )
+
     def value(self, x: int, y: int) -> float:
         dx, dy = self.x2 - self.x1, self.y2 - self.y1
         if dx == dy == 0:
@@ -108,9 +122,5 @@ class GradientLine(SVGline):
     def color(self, x: int, y: int) -> Optional[Color]:
         t = self.value(x, y)
         if self.color1 and self.color2:
-            return self.color1 + (self.color2 - self.color1) * t
-        if self.color1:
-            return self.color1
-        if self.color2:
-            return self.color2
-        return None
+            return self.color1 * (1 - t) + self.color2 * t
+        return self.color1 or self.color2

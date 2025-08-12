@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Union
 from utils.svg.element import SVGElement
 from utils.config import OUTPUT_DIR
+from utils.system.file import split_filename
 
 
 def make(
@@ -45,6 +46,7 @@ def make(
     svg_str = '\n'.join(svg_content)
 
     if filename is not None:
-        with open(OUTPUT_DIR / f'{filename}.svg', 'w', encoding='utf-8') as file:
+        name = split_filename(filename, 'n')
+        with open(OUTPUT_DIR / f'{name}.svg', 'w', encoding='utf-8') as file:
             file.write(svg_str)
     return svg_str
