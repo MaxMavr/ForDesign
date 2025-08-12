@@ -1,15 +1,6 @@
 /venv/
 .idea/
 .venv/
-
-# Игнорировать всё
-*
-
-# Разрешить папки
-!*/
-
-# Не игнорировать .gitignore
-!/.gitignore
-
-# Не игнорировать Python-файлы
-!*.py
+input/
+output/
+1TEST/
