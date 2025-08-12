@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Union
-from utils.svg.item import SVGElement
+from utils.svg.element import SVGElement
 from utils.config import OUTPUT_DIR
 
 
@@ -40,12 +40,11 @@ def make(
         else:
             svg_content.append(str(item))
 
-    svg_content.extend(content)
     svg_content.append('</svg>')
 
     svg_str = '\n'.join(svg_content)
 
     if filename is not None:
-        with open(OUTPUT_DIR / filename, 'w', encoding='utf-8') as file:
+        with open(OUTPUT_DIR / f'{filename}.svg', 'w', encoding='utf-8') as file:
             file.write(svg_str)
     return svg_str
