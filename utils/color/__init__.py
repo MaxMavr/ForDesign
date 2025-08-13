@@ -1,8 +1,14 @@
 from math import sqrt
 from random import randint
 from PIL import Image
-from typing import Tuple, Dict, Union, Optional
+from typing import Tuple, Dict, Union, Optional, TypeAlias
 import re
+
+ColorArithmetic: TypeAlias = Union['Color', int, float,
+                                   Tuple[int, int, int], Tuple[float, float, float],
+                                   Tuple[int, int, int, int], Tuple[float, float, float, float]]
+
+Number: TypeAlias = Union[int, float]
 
 
 css_named_colors: Dict[str, Tuple[int, int, int, int]] = {
@@ -160,11 +166,11 @@ css_named_colors: Dict[str, Tuple[int, int, int, int]] = {
 }
 
 
-def _clamp(low: int, value: int, high: int) -> int:
-    return max(low, min(high, value))
+def _clamp(low: Number, value: Number, high: Number) -> int:
+    return int(round(max(low, min(high, value))))
 
 
-def _clamp_tuple(low: int, values: Tuple[int, ...], high: int) -> Tuple[int, ...]:
+def _clamp_tuple(low: Number, values: Tuple[Number, ...], high: Number) -> Tuple[int, ...]:
     return tuple(_clamp(low, v, high) for v in values)
 
 
@@ -173,51 +179,166 @@ class Color:
     Класс для представления и преобразования цвета с поддержкой различных моделей
     и форматов: RGB, RGBA, HEX, CMYK, HSL, HSV, CSS имена.
     """
-    def __init__(self, r: Optional[Union[int, float]] = None, g: Optional[Union[int, float]] = None,
-                 b: Optional[Union[int, float]] = None, a: Optional[Union[int, float]] = None):
-        r, g, b = (int(round(v)) if v is not None else 0 for v in (r, g, b))
-        a = int(round(a)) if a is not None else 255
+
+    def __init__(self,
+                 r: Optional[Number] = None,
+                 g: Optional[Number] = None,
+                 b: Optional[Number] = None,
+                 a: Optional[Number] = None):
+        self._r: int
+        self._g: int
+        self._b: int
+        self._a: int
+
+        r, g, b = (v if v is not None else 0 for v in (r, g, b))
+        a = a if a is not None else 255
         self._r, self._g, self._b, self._a = _clamp_tuple(0, (r, g, b, a), 255)
 
     @property
     def r(self) -> int:
-        """Возвращает красный канал цвета (0..255)"""
+        """Красный канал цвета [0..255]"""
         return self._r
 
     @r.setter
-    def r(self, value: Union[int, float]) -> None:
-        """Устанавливает красный канал цвета (0..255)"""
+    def r(self, value: Number) -> None:
+        """Красный канал цвета [0..255]"""
         self._r = _clamp(0, value, 255)
 
     @property
     def g(self) -> int:
-        """Возвращает зелёный канал цвета (0..255)"""
+        """Зелёный канал цвета [0..255]"""
         return self._g
 
     @g.setter
-    def g(self, value: Union[int, float]) -> None:
-        """Устанавливает зелёный канал цвета (0..255)"""
+    def g(self, value: Number) -> None:
+        """Зелёный канал цвета [0..255]"""
         self._g = _clamp(0, value, 255)
 
     @property
     def b(self) -> int:
-        """Возвращает синий канал цвета (0..255)"""
+        """Синий канал цвета [0..255]"""
         return self._b
 
     @b.setter
-    def b(self, value: Union[int, float]) -> None:
-        """Устанавливает синий канал цвета (0..255)"""
+    def b(self, value: Number) -> None:
+        """Синий канал цвета [0..255]"""
         self._b = _clamp(0, value, 255)
 
     @property
     def a(self) -> int:
-        """Возвращает альфа-канал цвета (0..255)"""
+        """Альфа-канал цвета [0..255]"""
         return self._a
 
     @a.setter
-    def a(self, value: Union[int, float]) -> None:
-        """Устанавливает альфа-канал цвета (0..255)"""
+    def a(self, value: Number) -> None:
+        """Альфа-канал цвета [0..255]"""
         self._a = _clamp(0, value, 255)
+
+    def __add__(self, other: ColorArithmetic) -> 'Color':
+        a = self._a
+        if isinstance(other, Color):
+            r = self.r + other.r
+            g = self.g + other.g
+            b = self.b + other.b
+        elif isinstance(other, (int, float)):
+            r = self.r + other
+            g = self.g + other
+            b = self.b + other
+        elif isinstance(other, tuple) and all(isinstance(i, (int, float)) for i in other):
+            if len(other) == 3:
+                r = 0, self.r + other[0]
+                g = 0, self.g + other[1]
+                b = 0, self.b + other[2]
+            elif len(other) == 4:
+                r = self.r + other[0]
+                g = self.g + other[1]
+                b = self.b + other[2]
+                a = self.a + other[3]
+            else:
+                return NotImplemented
+        else:
+            return NotImplemented
+        return Color(r, g, b, a)
+
+    def __radd__(self, other: ColorArithmetic) -> 'Color':
+        return self.__add__(other)
+
+    def __sub__(self, other: ColorArithmetic) -> 'Color':
+        a = self._a
+        if isinstance(other, Color):
+            r = self.r - other.r
+            g = self.g - other.g
+            b = self.b - other.b
+        elif isinstance(other, (int, float)):
+            r = self.r - other
+            g = self.g - other
+            b = self.b - other
+        elif isinstance(other, tuple) and all(isinstance(i, (int, float)) for i in other):
+            if len(other) == 3:
+                r = 0, self.r - other[0]
+                g = 0, self.g - other[1]
+                b = 0, self.b - other[2]
+            elif len(other) == 4:
+                r = self.r - other[0]
+                g = self.g - other[1]
+                b = self.b - other[2]
+                a = self.a - other[3]
+            else:
+                return NotImplemented
+        else:
+            return NotImplemented
+        return Color(r, g, b, a)
+
+    def __rsub__(self, other: ColorArithmetic) -> 'Color':
+        a = self._a
+        if isinstance(other, Color):
+            r = other - self.r.r
+            g = other - self.g.g
+            b = other - self.b.b
+        elif isinstance(other, (int, float)):
+            r = other - self.r
+            g = other - self.g
+            b = other - self.b
+        elif isinstance(other, tuple) and all(isinstance(i, (int, float)) for i in other):
+            if len(other) == 3:
+                r = 0, other[0] - self.r
+                g = 0, other[1] - self.g
+                b = 0, other[2] - self.b
+            elif len(other) == 4:
+                r = other[0] - self.r
+                g = other[1] - self.g
+                b = other[2] - self.b
+                a = other[3] - self.a
+            else:
+                return NotImplemented
+        else:
+            return NotImplemented
+        return Color(r, g, b, a)
+
+    def __neg__(self) -> 'Color':
+        return Color(
+            _clamp(0, 255 - self.r, 255),
+            _clamp(0, 255 - self.g, 255),
+            _clamp(0, 255 - self.b, 255),
+            self.a
+        )
+
+    def __mul__(self, multiplier: Number) -> 'Color':
+        r = _clamp(0, self.r * multiplier, 255)
+        g = _clamp(0, self.g * multiplier, 255)
+        b = _clamp(0, self.b * multiplier, 255)
+        return Color(r, g, b, self.a)
+
+    def __rmul__(self, multiplier: Number) -> 'Color':
+        return self.__mul__(multiplier)
+
+    def __eq__(self, other: 'Color') -> bool:
+        return (self.r == other.r and
+                self.g == other.g and
+                self.b == other.b)
+
+    def __ne__(self, other: 'Color') -> bool:
+        return not self.__eq__(other)
 
     @classmethod
     def from_random(cls, alpha: bool = False) -> 'Color':
@@ -225,7 +346,7 @@ class Color:
         return cls(randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255) if alpha else 255)
 
     @classmethod
-    def from_dict(cls, color: Dict[str, Union[int, float]]) -> 'Color':
+    def from_dict(cls, color: Dict[str, Number]) -> 'Color':
         r = color.get('r', 0)
         g = color.get('g', 0)
         b = color.get('b', 0)
@@ -233,7 +354,7 @@ class Color:
         return cls(r, g, b, a)
 
     def to_dict(self) -> Dict[str, int]:
-        return {'r': self._r, 'g': self._g, 'b': self._b, 'a': self._a}
+        return {'r': self.r, 'g': self.g, 'b': self.b, 'a': self.a}
 
     @classmethod
     def from_rgb(cls, color: Tuple[int, int, int]) -> 'Color':
@@ -282,12 +403,13 @@ class Color:
         return cls(r, g, b)
 
     @classmethod
-    def from_hsl(cls, color: Tuple[int, int, int]) -> 'Color':
+    def _from_hsla(cls, color: Tuple[int, int, int], alpha: Optional[int] = None) -> 'Color':
         """Создать цвет из HSL (h: 0..360; s, l: 0..100)."""
         h, s, l = color
         h = _clamp(0, h, 360)
         s = _clamp(0, s, 100)
         l = _clamp(0, l, 100)
+        a = _clamp(0, alpha, 255)
 
         s /= 100
         l /= 100
@@ -309,15 +431,16 @@ class Color:
             r, g, b = c, 0, x
 
         r, g, b = [(val + m) * 255 for val in (r, g, b)]
-        return cls(r, g, b)
+        return cls(r, g, b, a)
 
     @classmethod
-    def from_hsv(cls, color: Tuple[int, int, int]) -> 'Color':
+    def _from_hsva(cls, color: Tuple[int, int, int], alpha: Optional[int] = None) -> 'Color':
         """Создать цвет из HSV (h: 0..360; s, v: 0..100)."""
         h, s, v = color
         h = _clamp(0, h, 360)
         s = _clamp(0, s, 100)
         v = _clamp(0, v, 100)
+        a = _clamp(0, alpha, 255)
 
         s /= 100
         v /= 100
@@ -339,36 +462,55 @@ class Color:
             r, g, b = c, 0, x
 
         r, g, b = [(val + m) * 255 for val in (r, g, b)]
-        return cls(r, g, b)
+        return cls(r, g, b, a)
+
+    @classmethod
+    def from_hsl(cls, color: Tuple[int, int, int]) -> 'Color':
+        return cls._from_hsla(color)
+
+    @classmethod
+    def from_hsv(cls, color: Tuple[int, int, int]) -> 'Color':
+        return cls._from_hsva(color)
+
+    @classmethod
+    def from_hsla(cls, color: Tuple[int, int, int, int]) -> 'Color':
+        h, s, l, a = color
+        return cls._from_hsla((h, s, l), a)
+
+    @classmethod
+    def from_hsva(cls, color: Tuple[int, int, int, int]) -> 'Color':
+        h, s, v, a = color
+        return cls._from_hsva((h, s, v), a)
 
     @property
     def rgb(self) -> Tuple[int, int, int]:
-        return self._r, self._g, self._b
+        return self.r, self.g, self.b
+
+    @property
+    def _rgb_normalize(self) -> Tuple[float, float, float]:
+        return self.r / 255, self.g / 255, self.b / 255
 
     @property
     def rgba(self) -> Tuple[int, int, int, int]:
-        return self._r, self._g, self._b, self._a
-
-    @property
-    def _rgba_normalize(self) -> Tuple[float, float, float, float]:
-        return self._r / 255, self._g / 255, self._b / 255, self._a / 255
+        return self.r, self.g, self.b, self.a
 
     @property
     def hex(self) -> str:
-        return f'#{self._r:02X}{self._g:02X}{self._b:02X}'
+        return f'#{self.r:02X}{self.g:02X}{self.b:02X}'
 
     @property
     def hexa(self) -> str:
-        return f'#{self._r:02X}{self._g:02X}{self._b:02X}{self._a:02X}'
+        return f'#{self.r:02X}{self.g:02X}{self.b:02X}{self.a:02X}'
 
     @property
     def css_name(self) -> str:
         """Ближайшее CSS имя цвета по Евклидову расстоянию в RGBA."""
+
         def distance_to(_r: int, _g: int, _b: int, _a: int) -> float:
-            return sqrt((_r - self._r) ** 2 + (_g - self._g) ** 2 + (_b - self._b) ** 2 + (_a - self._a) ** 2)
+            return sqrt((_r - self.r) ** 2 + (_g - self.g) ** 2 + (_b - self.b) ** 2 + (_a - self.a) ** 2)
 
         for name, (r, g, b, a) in css_named_colors.items():
-            if (r, g, b, a) == (self._r, self._g, self._b, self._a):
+            if (r, g, b, a) == (self.r, self.g, self.b, self.a):
                 return name
 
         closest_name = None
@@ -383,7 +525,7 @@ class Color:
 
     @property
     def cmyk(self) -> Tuple[int, int, int, int]:
-        r, g, b, _ = self._rgba_normalize
+        r, g, b = self._rgb_normalize
         k = 1 - max(r, g, b)
         if k < 1:
             c = (1 - r - k) / (1 - k)
@@ -395,12 +537,12 @@ class Color:
 
     @property
     def brightness(self) -> float:
-        value = 0.299 * self._r + 0.587 * self._g + 0.114 * self._b
+        value = 0.299 * self.r + 0.587 * self.g + 0.114 * self.b
         return value
 
     @property
     def hue(self) -> float:
-        r, g, b, _ = self._rgba_normalize
+        r, g, b = self._rgb_normalize
         max_c, min_c = max(r, g, b), min(r, g, b)
         delta = max_c - min_c
 
@@ -420,7 +562,7 @@ class Color:
 
     @property
     def saturation(self) -> float:
-        r, g, b, _ = self._rgba_normalize
+        r, g, b = self._rgb_normalize
         max_c, min_c = max(r, g, b), min(r, g, b)
         l = (max_c + min_c) / 2
         delta = max_c - min_c
@@ -433,13 +575,13 @@ class Color:
 
     @property
     def lightness(self) -> float:
-        r, g, b, _ = self._rgba_normalize
+        r, g, b = self._rgb_normalize
         value = (max(r, g, b) + min(r, g, b)) / 2
         return value
 
     @property
     def hsv(self) -> Tuple[int, int, int]:
-        r, g, b, _ = self._rgba_normalize
+        r, g, b = self._rgb_normalize
         max_c, min_c = max(r, g, b), min(r, g, b)
         delta = max_c - min_c
 
@@ -458,111 +600,30 @@ class Color:
 
         return round(h), round(s * 100), round(l * 100)
 
-    def __add__(self, other: Union['Color', int,  float, Tuple[int, int, int], Tuple[float, float, float]]) -> 'Color':
-        if isinstance(other, Color):
-            r = _clamp(0, self._r + other._r, 255)
-            g = _clamp(0, self._g + other._g, 255)
-            b = _clamp(0, self._b + other._b, 255)
-        elif isinstance(other, (int, float)):
-            r = _clamp(0, self._r + other, 255)
-            g = _clamp(0, self._g + other, 255)
-            b = _clamp(0, self._b + other, 255)
-        elif isinstance(other, tuple) and len(other) == 3 and all(isinstance(i, (int, float)) for i in other):
-            r = _clamp(0, self._r + other[0], 255)
-            g = _clamp(0, self._g + other[1], 255)
-            b = _clamp(0, self._b + other[2], 255)
-        else:
-            return NotImplemented
-        return Color(r, g, b)
-
-    def __radd__(self, other: Union['Color', int,  float, Tuple[int, int, int], Tuple[float, float, float]]) -> 'Color':
-        return self.__add__(other)
-
-    def __sub__(self, other: Union['Color', int,  float, Tuple[int, int, int], Tuple[float, float, float]]) -> 'Color':
-        if isinstance(other, Color):
-            r = _clamp(0, self._r - other._r, 255)
-            g = _clamp(0, self._g - other._g, 255)
-            b = _clamp(0, self._b - other._b, 255)
-        elif isinstance(other, (int, float)):
-            r = _clamp(0, self._r - other, 255)
-            g = _clamp(0, self._g - other, 255)
-            b = _clamp(0, self._b - other, 255)
-        elif isinstance(other, tuple) and len(other) == 3 and all(isinstance(i, (int, float)) for i in other):
-            r = _clamp(0, self._r - other[0], 255)
-            g = _clamp(0, self._g - other[1], 255)
-            b = _clamp(0, self._b - other[2], 255)
-        else:
-            return NotImplemented
-        return Color(r, g, b)
-
-    def __rsub__(self, other: Union['Color', int, float, Tuple[int, int, int], Tuple[float, float, float]]) -> 'Color':
-        if isinstance(other, Color):
-            r = _clamp(0, other._r - self._r, 255)
-            g = _clamp(0, other._g - self._g, 255)
-            b = _clamp(0, other._b - self._b, 255)
-        elif isinstance(other, (int, float)):
-            r = _clamp(0, other - self._r, 255)
-            g = _clamp(0, other - self._g, 255)
-            b = _clamp(0, other - self._b, 255)
-        elif isinstance(other, tuple) and len(other) == 3 and all(isinstance(i, (int, float)) for i in other):
-            r = _clamp(0, other[0] - self._r, 255)
-            g = _clamp(0, other[1] - self._g, 255)
-            b = _clamp(0, other[2] - self._b, 255)
-        else:
-            return NotImplemented
-        return Color(r, g, b)
-
-    def __neg__(self) -> 'Color':
-        return Color(
-            _clamp(0, 255 - self._r, 255),
-            _clamp(0, 255 - self._g, 255),
-            _clamp(0, 255 - self._b, 255),
-            self._a
-        )
-
-    def __mul__(self, multiplier: Union[int, float]) -> 'Color':
-        r = _clamp(0, self._r * multiplier, 255)
-        g = _clamp(0, self._g * multiplier, 255)
-        b = _clamp(0, self._b * multiplier, 255)
-        return Color(r, g, b)
-
-    def __rmul__(self, multiplier: Union[int, float]) -> 'Color':
-        return self.__mul__(multiplier)
-
-    def __eq__(self, color: 'Color') -> bool:
-        return (self._r == color._r and
-                self._g == color._g and
-                self._b == color._b)
-
-    def __ne__(self, other: 'Color') -> bool:
-        return not self.__eq__(other)
-
     def __str__(self):
         return self.hexa
 
     def __repr__(self):
-        return f'Color{self.hexa}({self._r}, {self._g}, {self._b}, {self._a})'
+        return f'Color{self.hexa}({self.r}, {self.g}, {self.b}, {self.a})'
 
-    def show_color(self, size: Tuple[int, int] = (300, 300)):
-        img = Image.new('RGB', size, self.rgb)
-        img.show(title=f'Color(HEX: {self.hexa}, RGB: {self.rgba}, CMYK: {self.cmyk}, CSS_name: {self.css_name}, HSV: {self.hsv}, HSL: {self.hsl})')
-        del img
+    def with_alpha(self, alpha: Number) -> 'Color':
+        return Color(self.r, self.g, self.b, alpha)
 
     def desaturate(self) -> 'Color':
         """Преобразовать цвет в оттенок серого по яркости."""
-        g = self.brightness
-        return Color(g, g, g, self.a)
+        value = self.brightness
+        return Color(value, value, value, self.a)
 
     def grayscale(self) -> 'Color':
         """Преобразовать цвет в оттенок серого по яркости."""
-        g = sum(self.rgb) / 3
-        return Color(g, g, g, self.a)
+        value = sum(self.rgb) / 3
+        return Color(value, value, value, self.a)
 
     def invert(self) -> 'Color':
         """Обратный цвет"""
         return -self
 
-    def shift_hue(self, shift: int) -> 'Color':
+    def rotate_hue(self, shift: Number) -> 'Color':
         """Сдвигает оттенок цвета на shift градусов по hue"""
         h, s, l = self.hsl
         h = (h + shift) % 360
@@ -570,35 +631,42 @@ class Color:
 
     def complement(self) -> 'Color':
         """Возвращает дополнительный цвет (напротив в цветовом круге)"""
-        return self.shift_hue(180)
+        return self.rotate_hue(180)
 
     def triad(self) -> Tuple['Color', 'Color']:
         """Возвращает два дополнительных цвета для триадной схемы"""
-        return self.shift_hue(120), self.shift_hue(240)
+        return self.rotate_hue(120), self.rotate_hue(240)
 
-    def analogous(self, shift: int = 30) -> Tuple['Color', 'Color']:
+    def analogous(self, shift: Number = 30) -> Tuple['Color', 'Color']:
         """Аналогичные цвета ±shift градусов по hue"""
-        return self.shift_hue(shift), self.shift_hue(-shift)
+        return self.rotate_hue(shift), self.rotate_hue(-shift)
 
-    def red_channel(self) -> 'Color':
+    def red_channel(self, grayscale: bool = True) -> 'Color':
         """Выделить красный канал"""
-        red_color = self - (0, 255, 255)
-        red_color.a = 255
-        return red_color
+        if grayscale:
+            return Color(self.r, self.r, self.r, 255)
+        return Color(self.r, 0, 0, 255)
 
-    def green_channel(self) -> 'Color':
+    def green_channel(self, grayscale: bool = True) -> 'Color':
         """Выделить зелёный канал"""
-        green_color = self - (255, 0, 255)
-        green_color.a = 255
-        return green_color
+        if grayscale:
+            return Color(self.g, self.g, self.g, 255)
+        return Color(0, self.g, 0, 255)
 
-    def blue_channel(self) -> 'Color':
+    def blue_channel(self, grayscale: bool = True) -> 'Color':
         """Выделить синий канал"""
-        blue_color = self - (255, 255, 0)
-        blue_color.a = 255
-        return blue_color
+        if grayscale:
+            return Color(self.b, self.b, self.b, 255)
+        return Color(0, 0, self.b, 255)
 
-    def alpha_channel(self) -> 'Color':
+    def alpha_channel(self, grayscale: bool = True) -> 'Color':
         """Выделить альфа-канал как оттенок серого"""
-        gray_value = self.a
-        return Color(gray_value, gray_value, gray_value, 255)
+        if grayscale:
+            return Color(self.a, self.a, self.a, 255)
+        return Color(0, 0, 0, self.a)
+
+    def show_color(self, size: Tuple[int, int] = (300, 300)):
+        img = Image.new('RGB', size, self.rgb)
+        img.show(
+            title=f'Color(HEX: {self.hexa}, RGB: {self.rgba}, CMYK: {self.cmyk}, CSS_name: {self.css_name}, HSV: {self.hsv}, HSL: {self.hsl})')
+        del img
