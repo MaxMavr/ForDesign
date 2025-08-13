@@ -1,5 +1,6 @@
 from math import sqrt
 from random import randint
+from PIL import Image
 from typing import Tuple, Dict, Union, Optional
 import re
 
@@ -157,9 +158,6 @@ css_named_colors: Dict[str, Tuple[int, int, int, int]] = {
     'transparent': (255, 255, 255, 0),
     'none': (0, 0, 0, 0)
 }
-
-
-NUM_ROUND = 3
 
 
 def _clamp(low: int, value: int, high: int) -> int:
@@ -544,3 +542,63 @@ class Color:
 
     def __repr__(self):
         return f'Color{self.hexa}({self._r}, {self._g}, {self._b}, {self._a})'
+
+    def show_color(self, size: Tuple[int, int] = (300, 300)):
+        img = Image.new('RGB', size, self.rgb)
+        img.show(title=f'Color(HEX: {self.hexa}, RGB: {self.rgba}, CMYK: {self.cmyk}, CSS_name: {self.css_name}, HSV: {self.hsv}, HSL: {self.hsl})')
+        del img
+
+    def desaturate(self) -> 'Color':
+        """Преобразовать цвет в оттенок серого по яркости."""
+        g = self.brightness
+        return Color(g, g, g, self.a)
+
+    def grayscale(self) -> 'Color':
+        """Преобразовать цвет в оттенок серого по яркости."""
+        g = sum(self.rgb) / 3
+        return Color(g, g, g, self.a)
+
+    def invert(self) -> 'Color':
+        """Обратный цвет"""
+        return -self
+
+    def shift_hue(self, shift: int) -> 'Color':
+        """Сдвигает оттенок цвета на shift градусов по hue"""
+        h, s, l = self.hsl
+        h = (h + shift) % 360
+        return Color.from_hsl((h, s, l))
+
+    def complement(self) -> 'Color':
+        """Возвращает дополнительный цвет (напротив в цветовом круге)"""
+        return self.shift_hue(180)
+
+    def triad(self) -> Tuple['Color', 'Color']:
+        """Возвращает два дополнительных цвета для триадной схемы"""
+        return self.shift_hue(120), self.shift_hue(240)
+
+    def analogous(self, shift: int = 30) -> Tuple['Color', 'Color']:
+        """Аналогичные цвета ±shift градусов по hue"""
+        return self.shift_hue(shift), self.shift_hue(-shift)
+
+    def red_channel(self) -> 'Color':
+        """Выделить красный канал"""
+        red_color = self - (0, 255, 255)
+        red_color.a = 255
+        return red_color
+
+    def green_channel(self) -> 'Color':
+        """Выделить зелёный канал"""
+        green_color = self - (255, 0, 255)
+        green_color.a = 255
+        return green_color
+
+    def blue_channel(self) -> 'Color':
+        """Выделить синий канал"""
+        blue_color = self - (255, 255, 0)
+        blue_color.a = 255
+        return blue_color
+
+    def alpha_channel(self) -> 'Color':
+        """Выделить альфа-канал как оттенок серого"""
+        gray_value = self.a
+        return Color(gray_value, gray_value, gray_value, 255)
